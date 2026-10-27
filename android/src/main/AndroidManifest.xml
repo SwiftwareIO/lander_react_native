@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The SDK talks to the Lander API. Merged into the app's manifest, so
+         release builds can reach the network without the app declaring it. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <!-- Starts tracking activities before the first one is created, so a
+             launch link that was already delivered is not delivered again when
+             Android restores the activity after process death. -->
+        <provider
+            android:name="link.lander.reactnative.LanderInitProvider"
+            android:authorities="${applicationId}.lander-init"
+            android:exported="false" />
+    </application>
+</manifest>
