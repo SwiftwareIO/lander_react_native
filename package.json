@@ -14,6 +14,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "CHANGELOG.md",
     "src",
     "lib",
     "android",
@@ -53,14 +54,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SwiftwareIO/lander.git",
-    "directory": "sdk/lander_react_native"
+    "url": "git+https://github.com/SwiftwareIO/lander_react_native.git"
   },
   "author": "Lander (https://golander.link)",
   "license": "MIT",
-  "homepage": "https://golander.link/docs/react-native",
+  "homepage": "https://github.com/SwiftwareIO/lander_react_native#readme",
   "bugs": {
-    "url": "https://github.com/SwiftwareIO/lander/issues"
+    "url": "https://github.com/SwiftwareIO/lander_react_native/issues"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

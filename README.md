@@ -191,7 +191,7 @@ A random install ID (UUID v4) stored outside backups, no fingerprinting, no adve
 
 ## Development
 
-This package lives in the Lander monorepo at `sdk/lander_react_native` and is not part of the pnpm workspace.
+The source is mirrored read only at [github.com/SwiftwareIO/lander_react_native](https://github.com/SwiftwareIO/lander_react_native); report issues there. It is developed in the Lander monorepo at `sdk/lander_react_native` (not part of the pnpm workspace) and pushed to the mirror on every merge, so send changes to the monorepo, not the mirror. Releases are described in [RELEASING.md](RELEASING.md).
 
 ```bash
 npm install
