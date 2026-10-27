@@ -1,3 +1,9 @@
+## 0.1.1
+
+* Publish from the public SDK mirror using npm trusted publishing and verifiable provenance.
+* Remove the bootstrap publishing token from the release path.
+* SDK behavior is unchanged.
+
 ## 0.1.0
 
 First release, with the behavior of `lander_flutter` 0.3.0.

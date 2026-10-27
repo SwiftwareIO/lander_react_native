@@ -1,6 +1,6 @@
 {
   "name": "react-native-lander",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Deep linking without the fuss: receive, resolve and create Lander links in React Native apps.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",

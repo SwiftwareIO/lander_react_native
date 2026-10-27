@@ -1,57 +1,40 @@
 # Releasing react-native-lander
 
-The SDK is developed in the private Lander monorepo at `sdk/lander_react_native`. Two jobs in `.github/workflows/sdk-react-native-release.yml` take it public:
+Develop the SDK in the private Lander monorepo at `sdk/lander_react_native`. Its public mirror is [SwiftwareIO/lander_react_native](https://github.com/SwiftwareIO/lander_react_native). Never edit the mirror directly.
 
-- **mirror**: every push to `main` that touches `sdk/lander_react_native/**` (or a manual run) pushes the folder, with its history, to the public mirror [github.com/SwiftwareIO/lander_react_native](https://github.com/SwiftwareIO/lander_react_native) on `main`. The mirror is read only. Never commit to it directly; the next push would overwrite it.
-- **release**: a monorepo tag `react-native-vX.Y.Z` checks the version, runs typecheck, tests and the build, publishes `react-native-lander@X.Y.Z` to npm and pushes tag `vX.Y.Z` to the mirror (the podspec's `source` points at that tag).
+## Publishing flow
 
-Each step that needs a secret is skipped with a notice when the secret is missing, so the workflow is safe to merge before the setup below is done.
+1. The private `.github/workflows/sdk-react-native-release.yml` mirrors SDK changes to the public repository on `main`.
+2. A private `react-native-vX.Y.Z` tag validates the version, ancestry, changelog, typecheck, tests and build, then pushes `vX.Y.Z` to the public mirror.
+3. The mirror's `.github/workflows/npm-release.yml` validates and builds the tagged source, then publishes through npm trusted publishing with provenance. It requires no npm access token.
+
+The public workflow is maintained at `sdk/lander_react_native/.github/workflows/npm-release.yml` in the monorepo. Keeping publication in the public mirror makes the npm repository URL match the workflow repository and allows provenance to identify the public source commit.
 
 ## One-time setup
 
-1. **Mirror deploy key.** Create a key pair without a passphrase:
+The private repository needs `SDK_MIRROR_REACT_NATIVE_DEPLOY_KEY`, the private half of a write deploy key scoped to the public mirror.
 
-   ```bash
-   ssh-keygen -t ed25519 -N '' -C 'lander monorepo -> lander_react_native' -f lander_react_native_mirror
-   ```
+In npm, open **react-native-lander > Settings > Trusted publishing** and configure:
 
-   Add `lander_react_native_mirror.pub` as a deploy key with **write access** on `SwiftwareIO/lander_react_native` (Settings > Deploy keys). Save the private key `lander_react_native_mirror` as the Actions secret `SDK_MIRROR_REACT_NATIVE_DEPLOY_KEY` on `SwiftwareIO/lander` (Settings > Secrets and variables > Actions). Delete both files afterwards.
+- Provider: GitHub Actions
+- Organization or user: `SwiftwareIO`
+- Repository: `lander_react_native`
+- Workflow filename: `npm-release.yml`
+- Environment: leave empty
+- Allow direct publication with `npm publish`
 
-2. **npm owner.** Use an npm account or organization that owns the `react-native-lander` name (the first publish claims it). Turn on two factor authentication for the account.
-
-3. **npm token.** Create a granular access token on npmjs.com (Access Tokens > Generate New Token > Granular Access Token) with **Read and write** permission on packages, limited to `react-native-lander` once it exists (for the very first publish, scope it to all packages of the owner, then replace it with a narrower one). Give it an expiry and a reminder to rotate it. Save it as the Actions secret `NPM_TOKEN` on `SwiftwareIO/lander`.
-
-4. Merge a change to `main` (or run the workflow by hand from the Actions tab) once, so the mirror's `main` exists before the first release.
-
-### Why there is no provenance or trusted publishing
-
-npm provenance (`npm publish --provenance`) and trusted publishing (OIDC from GitHub Actions, no token) both require the workflow to run in a **public** repository, because npm links the package to the source commit. The monorepo is private, so the workflow publishes with `NPM_TOKEN` and without `--provenance`. If the source ever moves to a public repository (for example by building and publishing from the mirror itself), switch to trusted publishing: add the repository and workflow as a trusted publisher in the package settings on npmjs.com, give the job `permissions: id-token: write`, publish with `npm publish --provenance --access public`, and delete `NPM_TOKEN`.
+Complete the first trusted publish within two days of saving the configuration. After a successful trusted publish, revoke the bootstrap npm token and remove `NPM_TOKEN` from the private repository. Neither release workflow uses that secret.
 
 ## Each release
 
-1. On a branch, bump the version in three places and describe the release:
-   - `version` in `package.json` (the podspec reads it from there),
-   - `landerSdkVersion` in `src/version.ts` (sent to the API as `sdkVersion`),
-   - a `## X.Y.Z` heading at the top of `CHANGELOG.md`,
-   - and the docs: `apps/docs/content/docs/react-native/changelog.mdx` and the version on `index.mdx`.
-2. Check locally:
+1. On a branch from current `origin/main`, update:
+   - `version` in `package.json` and both root version fields in `package-lock.json`;
+   - `landerSdkVersion` in `src/version.ts`;
+   - `CHANGELOG.md`;
+   - the version and changelog in `apps/docs/content/docs/react-native`.
+2. Run `npm ci`, `npm run typecheck`, `npm test -- --ci`, `npm run build`, and `npm pack --dry-run` in the SDK directory.
+3. Open and merge the release PR. Wait for the mirror push to succeed.
+4. Tag the merged main commit `react-native-vX.Y.Z` and push that tag to the private repository.
+5. Check both release runs, the npm version, provenance, tarball contents and the mirror's `vX.Y.Z` tag.
 
-   ```bash
-   cd sdk/lander_react_native
-   npm ci && npm run typecheck && npm test && npm run build
-   npm publish --dry-run
-   ```
-
-3. Open a pull request and merge it to `main`. The mirror job pushes the change to the mirror.
-4. Tag the merge commit on `main` and push the tag:
-
-   ```bash
-   git checkout main && git pull
-   git tag react-native-vX.Y.Z
-   git push origin react-native-vX.Y.Z
-   ```
-
-5. Watch the **React Native SDK release** run. It fails before publishing if the tag does not match `package.json`, `src/version.ts` and a `CHANGELOG.md` heading, or if the tagged commit is not on `main`. Re-running it after a failure is safe: a version that is already on npm is not published again, and the mirror tag is pushed afterwards.
-6. Check [npmjs.com/package/react-native-lander](https://www.npmjs.com/package/react-native-lander) and the `vX.Y.Z` tag on the mirror.
-
-Published versions cannot be overwritten. Within 72 hours `npm unpublish react-native-lander@X.Y.Z` is possible (if nothing depends on it); otherwise deprecate it with `npm deprecate react-native-lander@X.Y.Z "reason"` and publish a fix.
+A successful private tag push alone does not prove publication: the public **Publish React Native SDK** run must also succeed. Published versions cannot be overwritten. If a publish fails before creating the version, rerun the public workflow against its existing version tag. For a code fix, create a new patch release.
