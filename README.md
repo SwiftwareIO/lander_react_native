@@ -9,7 +9,7 @@ Lander.initialize({ apiKey: 'pk_live_...' })
 Lander.onDeepLink((link) => navigate(link.route))
 ```
 
-Full documentation: [golander.link/docs/react-native](https://golander.link/docs/react-native).
+Full documentation: [docs.golander.link/docs/react-native](https://docs.golander.link/docs/react-native).
 
 ## Requirements
 
